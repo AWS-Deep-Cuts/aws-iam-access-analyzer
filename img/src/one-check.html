@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- one-check: 1 回のチェックで起きること（記事「仕組み」の「1 回のチェックで起きること」、README の手順 3）。
+     本文との対応（記事の番号つきの説明 1〜5、README 手順 3 の「図の 1 と 5 は、あなたが CloudShell で行う操作と、その結果の受け取りです。
+     2〜4 は、Access Analyzer が自動で行う処理です。」）:
+       1 AWS CLI が、確かめるポリシーと問いを Access Analyzer の API に送る。CheckAccessNotGranted は POST /policy/check-access-not-granted（iaa-005、D-10）。
+         コマンドは aws accessanalyzer check-access-not-granted。パラメータは --policy-document（確かめるポリシー）・--access（許可してはいけないアクセス）・
+         --policy-type（ポリシーの種類）（iaa-030〜iaa-032）。
+       2 Access Analyzer が、ポリシーと問いを論理式として扱う。3 問いに当てはまるリクエストがあるかを調べる。
+         2 と 3 は説明のために簡略化した処理（API の説明文に内部の処理は書かれていない。Zelkova は公式サンプルの CheckNoNewAccess の記述だけのため、図に書かない。iaa-007）。
+       4 Access Analyzer が、結果・メッセージ・理由を返す（応答は result・message・reasons だけ。iaa-035）。
+       5 AWS CLI が、受け取った JSON を表示する。
+       - チェックはリソースを作成せず、ポリシーをどこにもアタッチしない（iaa-042）。東京リージョンで 1 回 $0.002（iaa-081）。
+       - 枠の見出しの IAM Access Analyzer のアイコンは、塗った正方形 .tile に白で置き、枠の左上の角に貼り付ける（線が枠の線と重ならない。2026-11-04 の指摘）。
+     幅の内訳: 左の枠 300 ＋ 間 120 ＋ 右の枠 380 = 800。左の中身の幅 252、右の中身の幅 332。
+       間の 120 は、矢印のラベル（最も長い行「PASS か FAIL」約 98）＋ 16 以上。DESIGN の 112 から 8 広げた。
+     高さの内訳（左）: 見出し 40 ＋ 24 ＋ CloudShell のノード 110 ＋ 24 ＋ 1 の箱 88 ＋ 16 ＋ 渡すものの箱 106 ＋ 16 ＋ 5 の箱 72 ＋ 24 = 520。
+     右の枠は左とそろえて 520。2 の箱は 1 の箱と、4 の箱は 5 の箱と、中心の高さをそろえる（y = 242、460）。3 の箱は記事の文のとおり 2 行（96）。
+     枠の下: 18 ＋ 注記 2 行 44。合計 582。DESIGN の 522 から、3 の箱を 2 行にし、渡すものの箱に見出しを足した分だけ増やした。 -->
+<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="deepcuts.css">
+<link rel="stylesheet" href="iaa.css">
+<script src="wires.js"></script>
+<script src="iaa.js"></script>
+<style>
+  #fig { width: 800px; height: 582px; }
+  .st > b { white-space: nowrap; }
+  .node { width: 252px; }
+  .st > code { display: block; font-family: var(--font-mono); font-weight: 800; font-size: 15px; line-height: 1.5; margin-top: 2px; }
+  .inp { position: absolute; border: 2px solid var(--ink); background: #fff; padding: 6px 12px; font-size: 17px; font-weight: 700; line-height: 22px; white-space: nowrap; }
+  .inp small { display: block; font-size: 16px; font-weight: 500; color: #4a4843; margin-bottom: 2px; }
+</style>
+</head><body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- ===== 左: あなたが行う操作 ===== -->
+  <div class="fr lane" style="left:0;top:0;width:300px;height:520px"><span class="lt">あなたが行う操作</span></div>
+  <div class="node" style="left:24px;top:64px"><img src="../icons/AWSCloudShell.svg"><div class="t">AWS CloudShell</div><div class="s">東京リージョン</div></div>
+  <div class="st" id="s1" style="left:24px;top:198px;width:252px;height:88px"><i>1</i><code>aws accessanalyzer<br>check-access-not-granted</code></div>
+  <div class="inp" style="left:24px;top:302px;width:252px;height:106px"><small>渡すもの</small>確かめるポリシー<br>許可してはいけないアクセス<br>ポリシーの種類</div>
+  <div class="st" id="s5" style="left:24px;top:424px;width:252px;height:72px"><i>5</i><b>JSON を表示する</b></div>
+
+  <!-- ===== 右: IAM Access Analyzer が自動で行う処理 ===== -->
+  <div class="fr lane aws" style="left:420px;top:0;width:380px;height:520px">
+    <div class="gl"><span class="tile"><img src="../icons/AWSIdentityAccessManagementIAMAccessAnalyzer.svg"></span><span class="ja">IAM Access Analyzer が自動で行う処理</span></div>
+  </div>
+  <div class="st" id="s2" style="left:444px;top:206px;width:332px;height:72px"><i>2</i><b>ポリシーと問いを論理式として扱う</b></div>
+  <div class="st hot" id="s3" style="left:444px;top:302px;width:332px;height:96px"><i>3</i><b>問いに当てはまるリクエストが<br>あるかを調べる</b></div>
+  <div class="st" id="s4" style="left:444px;top:424px;width:332px;height:72px"><i>4</i><b>結果・メッセージ・理由を返す</b></div>
+
+  <!-- 矢印のラベル（枠の間 x 300〜420） -->
+  <div class="lbl ink" data-nf="1" style="left:312px;top:190px;line-height:22px">ポリシーと<br>問いを送る</div>
+  <div class="lbl ink" data-nf="1" style="left:312px;top:468px;line-height:22px">PASS か FAIL</div>
+
+  <div class="tx dark" style="left:8px;top:538px;line-height:22px">リソースを作成しない・ポリシーをどこにもアタッチしない・1 回 $0.002<br>2 と 3 は説明のために簡略化した処理</div>
+</div>
+<script>
+window.addEventListener('load', async () => { await document.fonts.ready;
+  path([[280, 242], [440, 242]]);          // 1 → 2（y = 242）
+  path([[440, 460], [280, 460]]);          // 4 → 5（y = 460）
+  path([[610, 280], [610, 299]]);          // 2 → 3
+  path([[610, 400], [610, 421]]);          // 3 → 4
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

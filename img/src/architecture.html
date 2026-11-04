@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- architecture: ハンズオンの構成図（README「構築するアーキテクチャ」、記事「ハンズオンはこちら！」）。
+     本文との対応（README「構築するアーキテクチャ」の箇条書き）:
+       - あなたは CloudShell から AWS CLI のコマンドを実行し、東京リージョンの Access Analyzer の API を呼び出す。図の矢印は、あなたが CloudShell から呼び出す AWS の API。
+         手順 2 は ValidatePolicy、手順 3〜5 と 7 は CheckAccessNotGranted・CheckNoNewAccess・CheckNoPublicAccess、手順 6 は公式の検証ツールが同じ API に
+         ポリシーを 1 つずつ渡す（D-3）。そのため「手順 2〜7」「ポリシーを送る」とまとめる。手順 1 と 9 の ListAnalyzers は図に描かない。
+       - 手順 7 では IAM のポリシーシミュレーター SimulateCustomPolicy を呼び出す。IAM はグローバルなサービスのため、東京リージョンの枠の外、AWS アカウントの枠の中に置く。
+       - 手順 8 では AWS CloudTrail のイベント履歴を照会する（LookupEvents。D-6）。
+       - 手順 1・2・8 では、マネジメントコンソールで同じ結果を確かめる（README の同じ節の最後の段落）。マネジメントコンソールはノードと矢印にしない。
+       - AWS のリソースは作成しない。setup.sh は hands-on に .venv/ を作り、PyPI から公式の検証ツール cfn-policy-validator 0.0.37 をインストールする（README 手順 1 の表）。
+         hands-on には policies/・cfn/・puzzle/ がある（README 手順 1 のディレクトリの表）。
+       - エンドポイントは東京（iaa-021、iaa-024）。チェックはリソースを作成せず、ポリシーをどこにもアタッチしない（iaa-042）。Cost Explorer は描かない（DESIGN §6.3 図 8）。
+       - 「あなた」の枠の副題は「ブラウザから操作する」。CloudShell は AWS のサービスで、あなたはブラウザから開く（README の前提条件「AWS CloudShell を東京リージョンで開く」）。
+         手元の PC で動くものと誤解されないように添える（2026-11-04 の指摘）。
+       - CloudShell の箱は中身の高さに合わせる。見出しの直下に作業用のファイル、その下に使う AWS CLI のコマンド
+         （aws の下に accessanalyzer・cloudtrail・iam。README の手順で使うコマンドの最初の 2 語。ファイルの一覧と同じ字下げの形で、矢印の上から順に並べる）。
+         「あなた」の枠は、箱が 3 本の矢印の高さ 220・370・526 をすべて含むように、上端を 96 に下げる（2026-11-04 の指摘で、箱の上半分の空きを無くした）。
+     幅の内訳: 左の枠「あなた」256 ＋ 間 144 ＋ 右の枠「AWS Cloud」400 = 800。
+       右の枠の中: AWS アカウントの枠 x 424〜776（352）、東京リージョンの枠 x 448〜752（304）。リージョンの中身の幅 256。左の中身の幅 208。
+       間の 144 は、矢印のラベル（最も長い行「置き方を評価する」8 字 × 16 = 128）＋ 16。
+     高さの内訳（右）: AWS Cloud の見出し 40 ＋ 24 ＋ AWS アカウントの枠 564 ＋ 24 = 652。
+       AWS アカウントの枠 564 = 見出し 40 ＋ 24 ＋ 東京リージョンの枠 346 ＋ 24 ＋ シミュレーターのノード 106 ＋ 24。
+       東京リージョンの枠 346 = 見出し 40 ＋ 24 ＋ Access Analyzer のノード 126 ＋ 24 ＋ CloudTrail のノード 108 ＋ 24。
+       アイコンの中心の高さ（矢印の高さ）: Access Analyzer 220、CloudTrail 370、シミュレーター 526。
+     高さの内訳（左）: 「あなた」の枠 y 96〜612 = 見出し 40 ＋ 副題 ＋ 24 ＋ CloudShell の箱 428 ＋ 24 = 516。
+       CloudShell の箱 y 160〜588 = 16 ＋ 見出し 44 ＋ 16 ＋ 小見出し 22 ＋ 8 ＋ ファイルの一覧 152 ＋ 16 ＋ 小見出し 22 ＋ 8 ＋ コマンドの一覧 108 ＋ 16。
+     枠の下: 17 ＋ 3 行 66 ＋ 2。合計 737（DESIGN の 730 から、ノードの実際の高さに合わせて増やした）。 -->
+<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="deepcuts.css">
+<link rel="stylesheet" href="iaa.css">
+<script src="wires.js"></script>
+<script src="iaa.js"></script>
+<style>
+  #fig { width: 800px; height: 737px; }
+  .node .s { line-height: 1.35; }
+  .cs { position: absolute; border: 2px solid var(--ink); background: #fff; }
+  .cs .hd { position: absolute; left: 16px; top: 16px; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+  .cs .hd img { width: 40px; height: 40px; display: block; }
+  .cs .hd b { display: block; font-size: 17px; font-weight: 900; line-height: 1.3; }
+  .cs .hd span { display: block; font-size: 16px; font-weight: 500; color: #4a4843; line-height: 1.3; }
+  .cs .fl { position: absolute; left: 12px; right: 12px; font-size: 16px; font-weight: 900; line-height: 22px; }
+  .cs .files { position: absolute; left: 12px; right: 12px; border: 2px solid var(--line); background: var(--bone); padding: 8px 10px; line-height: 22px; }
+  .cs .files code { display: block; font-family: var(--font-mono); font-weight: 800; font-size: 15px; }
+  .cs .files span { display: block; padding-left: 18px; white-space: nowrap; font-size: 16px; font-weight: 500; color: #4a4843; }
+  .lbl.step b { display: block; font-weight: 900; }
+  .lbl.step { color: var(--ink); line-height: 22px; font-weight: 700; }
+</style>
+</head><body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- ===== 左: あなた ===== -->
+  <div class="fr lane" style="left:0;top:96px;width:256px;height:516px">
+    <div class="gl"><img src="../icons/User.svg"><span class="ja">あなた</span></div><span class="sub">ブラウザから操作する</span>
+  </div>
+  <div class="cs" id="cs" data-self="1" style="left:24px;top:160px;width:208px;height:428px">
+    <div class="hd"><img src="../icons/AWSCloudShell.svg"><div><b>AWS CloudShell</b><span>東京リージョン</span></div></div>
+    <div class="fl" style="top:76px">作業用のファイル</div>
+    <div class="files" style="top:106px"><code>hands-on/</code><code>&nbsp;&nbsp;policies/</code><code>&nbsp;&nbsp;cfn/</code><code>&nbsp;&nbsp;puzzle/</code><code>&nbsp;&nbsp;.venv/</code><span>公式の検証ツール</span></div>
+    <div class="fl" style="top:274px">AWS CLI のコマンド</div>
+    <div class="files" style="top:304px"><code>aws</code><code>&nbsp;&nbsp;accessanalyzer</code><code>&nbsp;&nbsp;cloudtrail</code><code>&nbsp;&nbsp;iam</code></div>
+  </div>
+
+  <!-- ===== 右: AWS Cloud > AWS アカウント > 東京リージョン ===== -->
+  <div class="fr cloud" style="left:400px;top:0;width:400px;height:652px">
+    <div class="gl"><img src="../icons/AWSCloudlogo.svg"><span class="en">AWS Cloud</span></div>
+  </div>
+  <div class="fr cloud" style="left:424px;top:64px;width:352px;height:564px">
+    <div class="gl"><img src="../icons/AWSAccount.svg"><span class="ja">AWS アカウント</span></div>
+  </div>
+  <div class="fr region" style="left:448px;top:128px;width:304px;height:346px">
+    <div class="gl"><img src="../icons/Region.svg"><span class="ja">東京リージョン</span><span class="code">ap-northeast-1</span></div>
+  </div>
+  <div class="node" id="aa" style="left:490px;top:192px;width:220px"><img src="../icons/AWSIdentityAccessManagementIAMAccessAnalyzer.svg"><div class="t">IAM Access Analyzer</div><div class="s"><code>ValidatePolicy</code><br><code>Check</code> で始まる 3 つ</div></div>
+  <div class="node" id="ct" style="left:490px;top:342px;width:220px"><img src="../icons/AWSCloudTrail.svg"><div class="t">AWS CloudTrail</div><div class="s">イベント履歴</div></div>
+  <div class="node" id="sim" style="left:480px;top:498px;width:240px"><img src="../icons/AWSIdentityandAccessManagement.svg"><div class="t">IAM ポリシーシミュレーター</div><div class="s">グローバルなサービス</div></div>
+
+  <!-- 矢印のラベル（枠の間 x 256〜400）。線の 8px 上に 2 行 -->
+  <div class="lbl step" data-nf="1" style="left:264px;top:168px"><b>手順 2〜7</b>ポリシーを送る</div>
+  <div class="lbl step" data-nf="1" style="left:264px;top:318px"><b>手順 8</b>記録を照会する</div>
+  <div class="lbl step" data-nf="1" style="left:264px;top:474px"><b>手順 7</b>置き方を評価する</div>
+
+  <!-- 枠の下 -->
+  <div class="tx" style="left:8px;top:669px;line-height:22px"><b style="color:var(--hot)">AWS のリソースは作成しない</b><br><span style="color:var(--grey)">手順 1・2・8 では、マネジメントコンソールで同じ結果を確かめる</span><br><span style="color:var(--grey)">setup.sh は PyPI から公式の検証ツールを CloudShell にインストールする</span></div>
+</div>
+<script>
+window.addEventListener('load', async () => { await document.fonts.ready;
+  path([[234, 220], [568, 220]]);   // 手順 2〜7 → IAM Access Analyzer
+  path([[234, 370], [568, 370]]);   // 手順 8 → AWS CloudTrail
+  path([[234, 526], [568, 526]]);   // 手順 7 → IAM ポリシーシミュレーター
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

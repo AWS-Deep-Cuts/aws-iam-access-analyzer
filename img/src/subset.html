@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- subset: 新しいアクセスのチェック CheckNoNewAccess が、許可するリクエストの範囲を比べること（記事「新しいアクセスのチェックは許可の範囲を比べる」、README の手順 4）。
+     本文との対応:
+       - 白い長方形の見出しは「すべてのリクエスト」、灰色の長方形の見出しは「参照ポリシーが許可するリクエスト」、白い点線の長方形の引き出し線のラベルは
+         「参照ポリシーが Deny で除いたリクエスト」。図の中で見出しを付けたものは凡例に載せない。凡例は、見出しの無い黒の太線と差し色だけ。
+         記事の文「次の図の左のように、確かめるポリシーが許可するリクエストが、参照ポリシーが許可するリクエストにすべて収まっていれば PASS です。
+         右のように、参照ポリシーが Deny で除いたリクエストに 1 つでもはみ出していれば FAIL で、はみ出した部分が新しいアクセスです。」（2026-11-04 の指摘）。
+       - 参照ポリシーは README の手順 4-2・記事の例（policies/reference-ec2-tag.json）。AllowEverything で すべてを Allow し、
+         DenyRunInstancesWithoutProjectTag で、タグ project を付けない ec2:RunInstances を Deny する（条件 Null aws:RequestTag/project = true。DESIGN 付録 A.5）。
+       - 公式サンプルによると、参照ポリシーは「すべてを Allow してから、調べたいアクセスを Deny する」形に書き、確かめるポリシーが
+         参照ポリシーの部分集合なら PASS（iaa-044、NEEDS_NUANCE のため図の注記も「〜形で書く」にとどめる）。
+       - 線は水平・垂直だけ。重なりは長方形の重なりで表す。
+     幅の内訳: 左のパネル 388 ＋ 間 24 ＋ 右のパネル 388 = 800。パネルの中身の幅 340（白い長方形）。白い長方形の中の灰色の長方形 292（左右 24）。
+     高さの内訳（パネル）: 見出し 40 ＋ 24 ＋ 白い長方形 340（見出し 56 ＋ 灰色の長方形 260 ＋ 24）＋ 16 ＋ 引き出し線のラベル 3 行 66 ＋ 16 ＋ 結果の 1 行 26 ＋ 24 = 552。
+     パネルの下: 24 ＋ 凡例 1 行 24 ＋ 16 ＋ 注記 1 行 22 ＋ 2 = 640。
+     灰色の長方形の中の座標（灰色の長方形の左上を 0）: 点線の長方形 x 142〜268・y 48〜158。
+       確かめるポリシー: 左 x 24〜118・y 130〜236、右 x 80〜190・y 110〜236（点線の長方形との重なり x 142〜190・y 110〜158 を差し色で塗る）。
+       引き出し線は x 244（点線の長方形の右から 24）。パネルの左端からは 24 ＋ 24 ＋ 244 = 292。 -->
+<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="deepcuts.css">
+<link rel="stylesheet" href="iaa.css">
+<script src="wires.js"></script>
+<script src="iaa.js"></script>
+<style>
+  #fig { width: 800px; height: 640px; }
+  #wires { z-index: 1; }
+  .fr > .lt.big { font-family: var(--font-mono); font-weight: 800; font-size: 19px; top: 6px; }
+  .all { position: absolute; width: 340px; height: 340px; border: 2px solid var(--ink); background: #fff; }
+  .all .al, .area .al { position: absolute; left: 12px; top: 8px; font-size: 16px; font-weight: 700; line-height: 22px; color: #4a4843; white-space: nowrap; }
+  .area { position: absolute; left: 22px; top: 54px; width: 292px; height: 260px; border: 2px solid var(--ink); background: #d9d5cb; }
+  .area .deny { position: absolute; left: 142px; top: 48px; width: 126px; height: 110px; border: 2px dashed var(--ink); background: #fff; }
+  .area .cand { position: absolute; border: 4px solid var(--ink); }
+  .area .new { position: absolute; background: var(--hot); }
+  .dl { position: absolute; font-size: 16px; font-weight: 700; line-height: 22px; white-space: nowrap; text-align: right; }
+  .dl code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; }
+  .res { position: absolute; font-size: 18px; font-weight: 900; line-height: 26px; white-space: nowrap; }
+  .res.hot { color: var(--hot); }
+  .legend { position: absolute; display: flex; gap: 28px; font-size: 16px; font-weight: 700; line-height: 24px; white-space: nowrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { display: inline-block; width: 24px; height: 20px; }
+  .sw.cand { border: 4px solid var(--ink); background: transparent; }
+  .sw.hot { background: var(--hot); }
+</style>
+</head><body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- ===== 左: PASS ===== -->
+  <div class="fr" style="left:0;top:0;width:388px;height:552px"><span class="lt big">PASS</span></div>
+  <div class="all" data-wireok="1" style="left:24px;top:64px">
+    <span class="al">すべてのリクエスト</span>
+    <div class="area" data-wireok="1">
+      <span class="al">参照ポリシーが許可するリクエスト</span>
+      <div class="deny"></div>
+      <div class="cand" style="left:24px;top:130px;width:94px;height:106px"></div>
+    </div>
+  </div>
+  <div class="dl" style="right:436px;top:420px"><!-- 右端 x = 388 - 24 = 364 -->参照ポリシーが Deny で除いたリクエスト<br>タグ project を付けない<br><code>ec2:RunInstances</code></div>
+  <div class="res" style="left:24px;top:502px">新しいアクセスは無い</div>
+
+  <!-- ===== 右: FAIL ===== -->
+  <div class="fr" style="left:412px;top:0;width:388px;height:552px"><span class="lt big" style="color:var(--hot)">FAIL</span></div>
+  <div class="all" data-wireok="1" style="left:436px;top:64px">
+    <span class="al">すべてのリクエスト</span>
+    <div class="area" data-wireok="1">
+      <span class="al">参照ポリシーが許可するリクエスト</span>
+      <div class="deny"></div>
+      <div class="new" style="left:144px;top:110px;width:46px;height:46px"></div>
+      <div class="cand" style="left:80px;top:110px;width:110px;height:126px"></div>
+    </div>
+  </div>
+  <div class="dl" style="right:24px;top:420px"><!-- 右端 x = 800 - 24 = 776 -->参照ポリシーが Deny で除いたリクエスト<br>タグ project を付けない<br><code>ec2:RunInstances</code></div>
+  <div class="res hot" style="left:436px;top:502px">差し色の部分が新しいアクセス</div>
+
+  <!-- ===== パネルの下: 凡例と注記 ===== -->
+  <div class="legend" style="left:8px;top:576px">
+    <span><i class="sw cand"></i>確かめるポリシーが許可するリクエスト</span>
+    <span><i class="sw hot"></i>新しいアクセス</span>
+  </div>
+  <div class="tx dark" style="left:8px;top:616px;line-height:22px">参照ポリシーは、すべてを Allow してから、調べたいアクセスを Deny する形で書く</div>
+</div>
+<script>
+window.addEventListener('load', async () => { await document.fonts.ready;
+  // 引き出し線: 点線の長方形の下端（白い長方形の上端 64 ＋ 灰色の長方形の上端 56 ＋ 158 = 278）から、ラベルの上（y 416）まで。
+  // x = パネルの左 ＋ 24 ＋ 24 ＋ 244
+  path([[24 + 24 + 244, 64 + 56 + 158], [24 + 24 + 244, 416]], {noarrow: true, width: 2});
+  path([[436 + 24 + 244, 64 + 56 + 158], [436 + 24 + 244, 416]], {noarrow: true, width: 2});
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

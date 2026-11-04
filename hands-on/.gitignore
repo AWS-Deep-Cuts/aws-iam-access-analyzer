@@ -1,0 +1,5 @@
+# setup.sh とハンズオンが作成する作業ファイル。cleanup.sh が削除する
+handson.env
+.analyzers-before.txt
+.venv/
+puzzle/try.json

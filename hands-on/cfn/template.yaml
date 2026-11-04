@@ -1,0 +1,43 @@
+# このテンプレートはデプロイしません。
+# 手順 6 で、公式の検証ツール cfn-policy-validator にポリシーを取り出させるためだけに使います。
+# バケットの名前は、AWS がドキュメントの例に使う amzn-s3-demo-bucket で始まる説明用の名前です。
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS Deep Cuts IAM Access Analyzer hands-on. This template is never deployed.
+Resources:
+  ReportBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: amzn-s3-demo-bucket-reports
+  ReportBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ReportBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadReports
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${ReportBucket.Arn}/*"
+  ReportWriterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: report-writer
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: WriteReports
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !GetAtt ReportBucket.Arn
+                  - !Sub "${ReportBucket.Arn}/*"

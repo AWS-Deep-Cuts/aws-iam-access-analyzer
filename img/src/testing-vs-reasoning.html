@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- testing-vs-reasoning: 「1 つずつ試す」と「すべてのリクエストについて調べる」の違い（記事「そもそも自動推論とは？」）。
+     本文との対応（article/aws-iam-access-analyzer.md「そもそも自動推論とは？」）:
+       - ポリシー: policies/s3-no-delete.json。s3:* を Allow し、s3:Delete* を Deny する「削除を禁止したつもりのポリシー」（DESIGN 付録 A.2）。
+       - 左: ロールで実際に操作して確かめる。オブジェクトの一覧の取得 s3:ListBucket は成功し、バケットの削除 s3:DeleteBucket は AccessDenied で拒否された。
+         試した 2 つのマスだけに印を付け、残りは試していないリクエスト。ポリシーシミュレーター（SimulateCustomPolicy）も
+         値を決めた 1 つのリクエストを評価する（iaa-052、iaa-120）。
+       - 右: ポリシーと問い 1「s3:DeleteBucket を許可するリクエストはあるか」を論理式に変換し、ソルバーが調べる。
+         答えは「無い」（PASS）か「あるかもしれない」（FAIL）のどちらか（iaa-033: PASS は doesn't allow、FAIL は might allow）。
+         問い 1 の答えは「無い」のため、PASS の箱を差し色にする。PASS と FAIL の呼び名は記事の次の章で定義する（iaa-035）。
+       - 自動推論・論理式・ソルバーは DESIGN §3 の用語集の定義（筆者による説明）。
+     幅の内訳: 左のパネル 376 ＋ 間 48 ＋ 右のパネル 376 = 800。パネルの中身の幅 328（左右 24）。
+     高さの内訳（左）: 見出し 40 ＋ 24 ＋ ポリシー 64 ＋ 16 ＋ 小見出し 22 ＋ 8 ＋ 格子 152 ＋ 16 ＋ 凡例 3 行 66 ＋ 24 ＋ 本文 26 ＋ 12 ＋ 補足 2 行 44 ＋ 28 = 556。
+     高さの内訳（右）: 見出し 40 ＋ 24 ＋ ポリシー 64 ＋ 16 ＋ 問い 64 ＋ 矢印 80 ＋ ソルバー 48 ＋ 縦の線 32 ＋ PASS 72 ＋ 16 ＋ FAIL 72 ＋ 28 = 556。DESIGN の 540 から、矢印のラベルとソルバーの間を空けるために 16 増やした。 -->
+<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="deepcuts.css">
+<link rel="stylesheet" href="iaa.css">
+<script src="wires.js"></script>
+<script src="iaa.js"></script>
+<style>
+  #fig { width: 800px; height: 556px; }
+  .pol { position: absolute; height: 64px; border: 2px solid var(--ink); background: #fff; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 17px; font-weight: 900; white-space: nowrap; }
+  .pol img { width: 36px; height: 36px; display: block; }
+  .grid { position: absolute; display: grid; grid-template-columns: repeat(6, 32px); grid-auto-rows: 32px; gap: 8px; }
+  .grid div { border: 2px solid var(--line); background: var(--bone); color: var(--grey); font-family: var(--font-mono); font-weight: 800; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; }
+  .grid div.ok, .grid div.ng { border-color: var(--ink); background: #fff; color: var(--ink); font-family: var(--font-body); font-size: 20px; font-weight: 900; }
+  .lg { position: absolute; font-size: 16px; font-weight: 500; line-height: 22px; white-space: nowrap; }
+  .lg .m { display: inline-block; width: 22px; text-align: center; font-weight: 900; }
+  .lg .q { font-family: var(--font-mono); font-weight: 800; color: var(--grey); }
+  .lg code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; }
+  .q2 { position: absolute; height: 64px; border: 2px solid var(--ink); background: #fff; padding: 6px 12px; font-size: 17px; font-weight: 900; line-height: 1.5; white-space: nowrap; }
+  .q2 i { font-style: normal; font-family: var(--font-mono); font-weight: 800; font-size: 16px; color: var(--hot); margin-right: 8px; }
+  .q2 code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; }
+  .solver { position: absolute; height: 48px; border: 3px solid var(--ink); background: var(--ink); color: #fff; font-size: 17px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; }
+  .st { height: 72px; }
+</style>
+</head><body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- ===== 左: 1 つずつ試す ===== -->
+  <div class="fr lane" style="left:0;top:0;width:376px;height:556px"><span class="lt">1 つずつ試す</span></div>
+  <div class="pol" style="left:24px;top:64px;width:328px"><img src="../icons/AWSIdentityAccessManagementPermissions.svg">削除を禁止したつもりのポリシー</div>
+  <div class="tx" style="left:24px;top:144px;font-weight:900;font-size:17px;line-height:22px">試したリクエスト</div>
+  <!-- 格子: 6 列 × 4 行（232 × 152）。中央 x = 24 + (328 − 232) / 2 = 72 -->
+  <div class="grid" style="left:72px;top:174px">
+    <div>?</div><div>?</div><div>?</div><div>?</div><div>?</div><div>?</div>
+    <div>?</div><div class="ok">✓</div><div>?</div><div>?</div><div>?</div><div>?</div>
+    <div>?</div><div>?</div><div>?</div><div>?</div><div class="ng">✗</div><div>?</div>
+    <div>?</div><div>?</div><div>?</div><div>?</div><div>?</div><div>?</div>
+  </div>
+  <div class="lg" style="left:24px;top:342px">
+    <span class="m">✓</span><code>s3:ListBucket</code> は許可された<br>
+    <span class="m">✗</span><code>s3:DeleteBucket</code> は拒否された<br>
+    <span class="m q">?</span>試していないリクエスト
+  </div>
+  <div class="tx big" style="left:24px;top:432px;line-height:26px">試したリクエストの結果だけが分かる</div>
+  <div class="tx dark" style="left:24px;top:470px;line-height:22px">ポリシーシミュレーターも、値を決めた<br>1 つのリクエストを評価する</div>
+
+  <!-- ===== 右: すべてのリクエストについて調べる ===== -->
+  <div class="fr lane aws" style="left:424px;top:0;width:376px;height:556px"><span class="lt">すべてのリクエストについて調べる</span></div>
+  <div class="pol" style="left:448px;top:64px;width:328px"><img src="../icons/AWSIdentityAccessManagementPermissions.svg">削除を禁止したつもりのポリシー</div>
+  <div class="q2" id="q" style="left:448px;top:144px;width:328px"><i>問い 1</i><code>s3:DeleteBucket</code> を<br>許可するリクエストはあるか</div>
+  <!-- 矢印: 問いの下端（y = 208）から、ソルバーの中心 x = 448 + 100 = 548 へ下ろす（80px。ラベル 2 行 44 ＋ 上下 16 以上） -->
+  
+  
+  <div class="lbl ink" data-nf="1" style="left:572px;top:224px;line-height:22px">ポリシーと問いを<br>論理式に変換する</div>
+  <div class="solver" id="solver" style="left:448px;top:288px;width:200px">ソルバー</div>
+  <!-- 結果: ソルバーの下端の左から 24px（x = 472）から縦の線を下ろし、PASS と FAIL の中心の高さで右へ枝を出す -->
+  <div class="st hot" id="pass" style="left:496px;top:368px;width:280px"><i>PASS</i><b>当てはまるリクエストは無い</b></div>
+  <div class="st" id="fail" style="left:496px;top:456px;width:280px"><i>FAIL</i><b>あるかもしれない</b></div>
+</div>
+<script>
+window.addEventListener('load', async () => { await document.fonts.ready;
+  path([[548, 208], [548, 284]]);
+  // ソルバー（下端 y = 336）から、PASS（中心 y = 404）と FAIL（中心 y = 492）へ
+  path([[472, 336], [472, 492], [492, 492]]);
+  path([[472, 404], [492, 404]]);
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

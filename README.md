@@ -5,8 +5,6 @@
 
 解説記事の原稿は [article/aws-iam-access-analyzer.md](./article/aws-iam-access-analyzer.md) にあります。
 
-<!-- 要確認: 手順 7 のおまけは、DESIGN.md §0.3 の PoC の結果に依存する。PoC の結果を書き込むまで公開しない。1〜4 のどれかが予想と違う、または 422 などのエラーになった場合は、DESIGN.md §7 R-1 のとおり、手順 7 を削り、ハンズオンのゴールの表・構成図の説明・費用の見積もりから手順 7 の行を消す。シミュレーターの行番号だけが違う場合は、手順 7-6 だけを直す -->
-
 > **Note**: このハンズオンは、ブラウザから AWS CLI のコマンドを実行できる AWS CloudShell を使って、東京リージョン（`ap-northeast-1`）で実施します。
 > - AWS CLI は 2.16.6 以降が必要です。2.16.6 より古い AWS CLI は、手順 5 の `check-no-public-access` コマンドと、手順 3-3 の `--access` での `resources` の指定に対応していません。[前提条件](#前提条件)の手順で確認してください。
 > - このハンズオンでは、**AWS のリソースを 1 つも作成しません**。CloudShell のホームディレクトリに、公式の検証ツールをインストールした Python の仮想環境と、作業用のファイルを作成するだけです。
@@ -739,8 +737,6 @@ AWS は、同じ検証ツールを GitHub Actions から使うための GitHub A
 
 ## ７．おまけ：Access Analyzer で 4 クイーン問題を解く
 
-<!-- 要確認: この手順全体は、DESIGN.md §0.3 の PoC の結果に依存する。PoC の結果で、期待する結果・行番号・message を書き換える。PoC が通らなければ、この手順を削る -->
-
 この手順は、解説記事の「Access Analyzer で N クイーン問題を解く」を読んだ人向けのおまけです。飛ばして、手順 8 に進んでもかまいません。この手順では、カスタムポリシーチェックを 4 回呼び出します。料金は $0.008 です。任意の `solve.sh` を含めると、最大 17 回、$0.034 です。
 
 N クイーン問題は、N×N のマスの盤に、N 個のクイーンを、互いに取り合わないように置く問題です。クイーンは、同じ行・同じ列・同じ斜めの線の上にある駒を取れます。各行のクイーンの列の組を、置き方と呼びます。このハンズオンでは、置き方の有無と置き方そのものを、指定したアクセスのチェックとポリシーシミュレーターで調べます。
@@ -757,7 +753,7 @@ N クイーン問題は、N×N のマスの盤に、N 個のクイーンを、�
 sed -n 1,4p puzzle/queens-4.json
 ```
 
-この手順では、盤の行と区別するため、ファイルの行には「ファイルの」を付けて書きます。ファイルの 1 行目は、ポリシーのバージョンと、ステートメントの並びの始まりです。ファイルの 2 行目は、Allow のステートメント `Board` です。このステートメントは、r1〜r4 の値がどれも 1〜4 のどれかであることを表します。ファイルの 3 行目以降は Deny のステートメントで、取り合う 2 つのクイーンの組み合わせを 1 つずつ拒否します。たとえば `Row1Col1VsRow2` は、「1 行目のクイーンが 1 列目で、2 行目のクイーンが 1 列目か 2 列目なら Deny」を表します。このファイルは、ファイルの 1 行に 1 つのステートメントを書いています。後で、ポリシーシミュレーターが返す行番号と照らし合わせるためです。
+この手順では、盤の行と区別するため、ファイルの行には「ファイルの」を付けて書きます。ファイルの 1 行目は、ポリシーのバージョンと、ステートメントの並びの始まりです。ファイルの 2 行目は、Allow のステートメント `Board` です。このステートメントは、r1〜r4 の値がどれも 1〜4 のどれかであることを表します。ファイルの 3 行目以降は Deny のステートメントで、取り合う 2 つのクイーンの組み合わせを 1 つずつ拒否します。たとえば `Row1Col1VsRow2` は、「1 行目のクイーンが 1 列目で、2 行目のクイーンが 1 列目か 2 列目なら Deny」を表します。このファイルは、ファイルの 1 行に 1 つのステートメントを書いています。後で、ポリシーシミュレーターが返すステートメントの番号を、ファイルの行と照らし合わせるためです。
 
 このポリシーで、`s3:GetObject` を許可していないかを問い合わせます。`PASS` なら、Allow に一致し、どの Deny にも一致しない値の組は無いこと、つまり置き方は無いことを表します。`FAIL` なら、置き方があるかもしれないことを表します。
 
@@ -823,7 +819,7 @@ aws accessanalyzer check-access-not-granted \
 <details>
 <summary>任意：すべての行を Access Analyzer に問い合わせて決める solve.sh</summary>
 
-`solve.sh` は、手順 7-3 と 7-4 を、すべての行について Access Analyzer に問い合わせて行うスクリプトです。1 行目から順に、列 1〜3 を 1 つずつ固定して問い合わせ、`FAIL` になった列に決めます。どの列も `PASS` なら、4 列目に決めます。最後に、決めた置き方をポリシーシミュレーターで評価します。チェックの呼び出しは最大 13 回、料金は最大 $0.026 です。開始の前に確認を求めるため、Enter を押して始めます。
+`solve.sh` は、手順 7-3 と 7-4 を、すべての行について Access Analyzer に問い合わせて行うスクリプトです。まず問題全体を 1 回チェックし、続けて 1 行目から順に、列 1〜3 を 1 つずつ固定して問い合わせ、`FAIL` になった列に決めます。どの列も `PASS` なら、4 列目に決めます。最後に、決めた置き方を、手順 7-5 と同じく `jq` でステートメントごとに分けて、ポリシーシミュレーターで評価します。チェックの呼び出しは最大 13 回、料金は最大 $0.026 です。開始の前に確認を求めるため、Enter を押して始めます。
 
 ```bash
 bash puzzle/solve.sh 4
@@ -836,44 +832,59 @@ bash puzzle/solve.sh 4
 
 ポリシーシミュレーター `SimulateCustomPolicy` に、問題全体のポリシー `queens-4.json` と、4 つの条件キーの値を渡して、置き方 2, 4, 1, 3 のリクエストを評価します。
 
+ただし、ポリシーシミュレーターは、1 つのポリシーの文字列を 2000 文字までしか受け付けません。`queens-4.json` は 4400 バイトあるため、`--policy-input-list file://puzzle/queens-4.json` と渡すと、`Value at 'policyInputList' failed to satisfy constraint: Member must have length less than or equal to 2000` の `ValidationError` で止まります。
+
+そこで、`jq` で、ステートメントを 1 つずつ別のポリシーに分けてから渡します。`--policy-input-list` には複数のポリシーを渡せ、ポリシーシミュレーターはそれらを合わせて評価します。Allow はどれか 1 つに一致すれば許可され、Deny はどれか 1 つに一致すれば拒否されるため、1 つのポリシーにまとめた場合と判定は変わりません。
+
+```bash
+mapfile -t POLICIES < <(jq -c '.Statement[] | {Version: "2012-10-17", Statement: [.]}' puzzle/queens-4.json)
+echo "${#POLICIES[@]}"
+```
+
+`25` と表示されます。Allow の `Board` が 1 つと、Deny が 24 個です。ファイルの 2〜26 行目のステートメントが、1〜25 番目のポリシーになります。
+
+分けたポリシーを渡して、置き方 2, 4, 1, 3 を評価します。
+
 ```bash
 aws iam simulate-custom-policy \
-  --policy-input-list file://puzzle/queens-4.json \
+  --policy-input-list "${POLICIES[@]}" \
   --action-names s3:GetObject \
   --context-entries \
     "ContextKeyName='aws:PrincipalTag/r1',ContextKeyValues='2',ContextKeyType=string" \
     "ContextKeyName='aws:PrincipalTag/r2',ContextKeyValues='4',ContextKeyType=string" \
     "ContextKeyName='aws:PrincipalTag/r3',ContextKeyValues='1',ContextKeyType=string" \
     "ContextKeyName='aws:PrincipalTag/r4',ContextKeyValues='3',ContextKeyType=string" \
-  --query 'EvaluationResults[0].{decision: EvalDecision, lines: MatchedStatements[].StartPosition.Line}'
+  --query 'EvaluationResults[0].{decision: EvalDecision, policies: MatchedStatements[].SourcePolicyId}'
 ```
 
 | パラメータ | 指定した値 | 意味 |
 | --- | --- | --- |
-| `--policy-input-list` | `queens-4.json` | 評価するポリシー |
+| `--policy-input-list` | 分けた 25 個のポリシー | 評価するポリシー。`"${POLICIES[@]}"` で、1 つずつ別の値として渡す |
 | `--action-names` | `s3:GetObject` | 評価するアクション |
 | `--context-entries` | 4 つの条件キーの値 | リクエストに含める条件キーの名前・値・型 |
-| `--query` | 判定と行番号 | 判定 `EvalDecision` と、判定の決め手になったステートメントの開始の行番号だけを表示する |
+| `--query` | 判定とポリシーの番号 | 判定 `EvalDecision` と、判定の決め手になったステートメントを含むポリシーの番号 `SourcePolicyId` だけを表示する |
+
+`policies` には、`PolicyInputList.1` のように、`--policy-input-list` で渡したポリシーの番号が 1 から数えて表示されます。置き方 2, 4, 1, 3 では `PolicyInputList.1`、つまりファイルの 2 行目の Allow のステートメント `Board` です。
 
 判定は、`allowed`・`explicitDeny`・`implicitDeny` の 3 つの値のどれかです。`explicitDeny` は、一致する Deny による拒否、つまり明示的な拒否を表します。`implicitDeny` は、必要な Allow が無いことによる拒否、つまり暗黙的な拒否を表します。
 
 ### 7-6. 置き間違えたときの決め手を確かめる
 
-4 行目だけを 4 列目に置き間違えた置き方 2, 4, 1, 4 で、同じコマンドを実行します。
+4 行目だけを 4 列目に置き間違えた置き方 2, 4, 1, 4 で、同じコマンドを実行します。手順 7-5 と同じシェルで実行し、変数 `POLICIES` を使います。
 
 ```bash
 aws iam simulate-custom-policy \
-  --policy-input-list file://puzzle/queens-4.json \
+  --policy-input-list "${POLICIES[@]}" \
   --action-names s3:GetObject \
   --context-entries \
     "ContextKeyName='aws:PrincipalTag/r1',ContextKeyValues='2',ContextKeyType=string" \
     "ContextKeyName='aws:PrincipalTag/r2',ContextKeyValues='4',ContextKeyType=string" \
     "ContextKeyName='aws:PrincipalTag/r3',ContextKeyValues='1',ContextKeyType=string" \
     "ContextKeyName='aws:PrincipalTag/r4',ContextKeyValues='4',ContextKeyType=string" \
-  --query 'EvaluationResults[0].{decision: EvalDecision, lines: MatchedStatements[].StartPosition.Line}'
+  --query 'EvaluationResults[0].{decision: EvalDecision, policies: MatchedStatements[].SourcePolicyId}'
 ```
 
-`lines` に表示された番号は、ファイルの行番号です。その行のステートメントを表示します。次のコマンドの `22` は、`lines` に表示された行番号に置き換えてください。
+`policies` には `PolicyInputList.21` が表示されます。`PolicyInputList.` の後ろの番号に 1 を足した数が、ファイルの行番号です。その行のステートメントを表示します。次のコマンドの `22` は、表示された番号に 1 を足した数に置き換えてください。
 
 ```bash
 sed -n 22p puzzle/queens-4.json
@@ -881,11 +892,9 @@ sed -n 22p puzzle/queens-4.json
 
 AWS の中で起きたことを整理します。手順 7-2 と 7-3 の 4 回は、手順 3 と同じ Access Analyzer の呼び出しです。手順 7-5 と 7-6 は、IAM のポリシーシミュレーターの呼び出しで、4 つのタグの値を決めた 1 つのリクエストを評価しました。ポリシーシミュレーターは、実際の操作をしません。
 
-<!-- 要確認: 期待する結果を、DESIGN.md §0.3 の PoC の結果で書き換える。特に、lines に表示される行番号の形と、22 行目が Row2Col4VsRow4 であること -->
-
 > **この手順で確かめること**
 > - **やること**: 4 回のチェックの結果と、2 回のポリシーシミュレーターの結果を確認します。
-> - **期待する結果**: 3 クイーンは `PASS`、4 クイーンは `FAIL` です。1 行目を 1 列目に固定すると `PASS`、2 列目に固定すると `FAIL` です。置き方 2, 4, 1, 3 の判定は `allowed` です。置き方 2, 4, 1, 4 の判定は `explicitDeny` で、`lines` に 22 が含まれ、ファイルの 22 行目の Sid は `Row2Col4VsRow4` です。
+> - **期待する結果**: 3 クイーンは `PASS`、4 クイーンは `FAIL` です。1 行目を 1 列目に固定すると `PASS`、2 列目に固定すると `FAIL` です。置き方 2, 4, 1, 3 の判定は `allowed` で、`policies` は `PolicyInputList.1` です。置き方 2, 4, 1, 4 の判定は `explicitDeny` で、`policies` は `PolicyInputList.21` です。21 に 1 を足したファイルの 22 行目の Sid は `Row2Col4VsRow4` です。
 > - **ここから分かること**: `PASS` は、Access Analyzer が「置き方は無い」と答えたものです。`FAIL` は「あるかもしれない」という答えで、置き方は返りません。1 行目の列を 1 つずつ固定して問い合わせ直すと、置き方を絞り込めます。この 4 クイーン問題では、1 行目が決まると残りの行は盤の上で決まり、決めた置き方を、ポリシーシミュレーターで具体的なリクエストとして確かめました。Deny の Sid から、どの 2 つのクイーンが取り合うかも分かります。
 
 ## ８．呼び出しの記録を確かめる
@@ -1032,6 +1041,7 @@ curl -s https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSIAMAccessAnal
 | `ThrottlingException` | 短い間に呼び出しすぎた | 数秒待ってから再実行する |
 | `cfn-policy-validator: command not found` | 仮想環境を有効にしていない | `source .venv/bin/activate` を実行する |
 | `--region` の値が空であることを示すエラー | セッションが終了し、変数が消えた | `cd ~/aws-iam-access-analyzer/hands-on` と `source ./handson.env` を実行する |
+| `simulate-custom-policy` が `Member must have length less than or equal to 2000` の `ValidationError` を返す | ポリシーシミュレーターに渡した 1 つのポリシーが 2000 文字を超えている | 手順 7-5 のとおり、`jq` でステートメントを 1 つずつ別のポリシーに分け、`--policy-input-list "${POLICIES[@]}"` で渡す。セッションが切れて変数 `POLICIES` が消えた場合は、手順 7-5 の `mapfile` の行を実行し直す |
 | `solve.sh` が `REGION が空です` で止まる | `handson.env` を読み込んでいない | `source ./handson.env` を実行してから、`hands-on` ディレクトリで実行する |
 | `lookup-events` が何も表示しない | 記録まで時間がかかる。または、リージョンが違う | 5〜10 分待ってから再実行する。`--region` が `ap-northeast-1` かを確かめる |
 | 手順 3-1 の続きの `--debug` の確かめで、何も表示されない | AWS CLI の版によって、処理の記録の行の形が違う | `grep -o -E 'method=POST, url=[^,]+'` を `grep -c 'access-analyzer.ap-northeast-1.amazonaws.com'` に替えて、行の数だけを表示する。処理の記録の全体は画面に表示しない |

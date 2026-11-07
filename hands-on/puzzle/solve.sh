@@ -8,6 +8,7 @@ export AWS_PAGER=""
 #   2. 1 行目から順に、決めた行の --fix と、試す列の --fix を並べて make-queens.py で try.json を作り、チェックする
 #      列 1〜N-1 を順に試し、FAIL になった列に決める。どの列も PASS なら、呼び出さずに N 列目に決める
 #   3. 決めた置き方を、IAM のポリシーシミュレーター SimulateCustomPolicy で評価して、判定を表示する
+#      ポリシーシミュレーターの 2000 文字の制限のため、jq でステートメントごとに分けて渡す
 # チェックの呼び出しは最大 N×(N-1)+1 回です。東京リージョンで 1 回 $0.002 かかります。
 # AWS のリソースは作成しません。作業ファイルは puzzle/try.json だけで、cleanup.sh が削除します。
 #
@@ -24,6 +25,12 @@ readonly TRY="${SCRIPT_DIR}/try.json"
 # 5 クイーンは、ポリシーが約 8.9 KB になり、チェックが受け付けるかを確かめていないため、3 か 4 だけを受け付ける
 if [[ ! "${N}" =~ ^[34]$ ]]; then
   echo "❌ Error: 盤の大きさは 3 か 4 で指定してください。指定された値: ${N}" >&2
+  exit 1
+fi
+
+# 最後のポリシーシミュレーターの呼び出しで、ポリシーを分けるのに jq を使う。料金のかかる呼び出しの前に確かめる
+if ! command -v jq > /dev/null 2>&1; then
+  echo "❌ Error: jq が見つかりません。jq をインストールしてから実行してください。" >&2
   exit 1
 fi
 
@@ -100,12 +107,21 @@ echo "  チェックの呼び出し: ${CALLS} 回、\$$(cost "${CALLS}")"
 echo ""
 
 # 決めた置き方を、問題全体のポリシーに対して、ポリシーシミュレーターで評価する
+# ポリシーシミュレーターは 1 つのポリシーを 2000 文字までしか受け付けない（queens-4.json は 4400 バイト）。
+# そのため、README の手順 7-5 と同じく、jq でステートメントを 1 つずつ別のポリシーに分けて渡す。
+# Allow はどれか 1 つに、Deny はどれか 1 つに一致すれば効くため、判定は 1 つのポリシーのときと変わらない
+declare -a POLICIES=()
+mapfile -t POLICIES < <(jq -c '.Statement[] | {Version: "2012-10-17", Statement: [.]}' "$(full_policy)")
+if [[ "${#POLICIES[@]}" -eq 0 ]]; then
+  echo "❌ Error: ポリシーをステートメントごとに分けられませんでした。" >&2
+  exit 1
+fi
 declare -a CONTEXT=()
 for (( row = 1; row <= N; row++ )); do
   CONTEXT+=("ContextKeyName='aws:PrincipalTag/r${row}',ContextKeyValues='${PLACEMENT[row - 1]}',ContextKeyType=string")
 done
 DECISION=$(aws iam simulate-custom-policy \
-  --policy-input-list "file://$(full_policy)" \
+  --policy-input-list "${POLICIES[@]}" \
   --action-names s3:GetObject \
   --context-entries "${CONTEXT[@]}" \
   --query 'EvaluationResults[0].EvalDecision' --output text)

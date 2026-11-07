@@ -210,12 +210,11 @@ aws accessanalyzer list-analyzers --region "${REGION}" \
 
 表の列は、左から、アナライザーの名前・種類・状態・管理元です。管理元が表示されるのは、AWS のサービスが管理するアナライザーです。
 
-<!-- 要確認: IAM コンソールの左のメニューで、Access Analyzer のアナライザーの一覧を開く項目の名前を実機で確かめて、手順の文を直す -->
 <!-- 画面写真: IAM コンソールの Access Analyzer のアナライザーの一覧。一覧の部分を枠で囲む -->
 
 > **この手順で確かめること**
-> - **やること**: CLI の表を確認します。続けて、マネジメントコンソールの右上のリージョンの表示が「アジアパシフィック (東京)」であることを確かめてから、IAM を開き、左のメニューにある Access Analyzer の項目から、アナライザーの一覧を開きます。**アナライザーの作成のボタンは押さないでください。** 未使用アクセスや内部アクセスのアナライザーは、分析する IAM ロールとユーザーの数や、リソースの数に応じて課金されます。
-> - **期待する結果**: 環境によって、何も表示されないか、既にあるアナライザーが表示されます。AWS 公式の Agent Skill によると、AWS Security Hub を使っているアカウントには、名前が `_AccessAnalyzerForSecurityHub` で始まる未使用アクセスのアナライザーがあることがあります。Agent Skill は、AWS が公開している、AWS のサービスの使い方をまとめ、AI エージェントが読み込んで使えるようにした文書です。コンソールの一覧は、CLI の表と同じです。
+> - **やること**: CLI の表を確認します。続けて、マネジメントコンソールの右上のリージョンの表示が「アジアパシフィック (東京)」であることを確かめてから、IAM を開き、左のメニューの「アクセスレポート」の下にある Access Analyzer の「アナライザー設定」を選びます。開いた「アナライザーの設定」の画面の「アナライザー」の表が、アナライザーの一覧です。**アナライザーの作成のボタンは押さないでください。** 未使用アクセスや内部アクセスのアナライザーは、分析する IAM ロールとユーザーの数や、リソースの数に応じて課金されます。
+> - **期待する結果**: 環境によって、何も表示されないか、既にあるアナライザーが表示されます。アナライザーが 1 つもない場合、CLI では表の見出しも表示されず、コンソールでは「表示するリソースがありません」と表示されます。AWS 公式の Agent Skill によると、AWS Security Hub を使っているアカウントには、名前が `_AccessAnalyzerForSecurityHub` で始まる未使用アクセスのアナライザーがあることがあります。Agent Skill は、AWS が公開している、AWS のサービスの使い方をまとめ、AI エージェントが読み込んで使えるようにした文書です。コンソールの一覧は、CLI の表と同じです。
 > - **ここから分かること**: このハンズオンで使うカスタムポリシーチェックは、アナライザーを使いません。そのため、この一覧は後片付けまで変わりません。後片付けの `cleanup.sh` は、`setup.sh` が記録した一覧と、その時点の一覧を比べます。
 
 ## ２．ポリシーの検証で書き方の誤りを見つける
@@ -250,15 +249,12 @@ aws accessanalyzer validate-policy \
 
 AWS の中では、Access Analyzer がポリシーの書き方を調べ、指摘を 1 件ずつ、JSON の中の行と列の位置を付けて返しました。ポリシーはどこにもアタッチされていません。AWS CLI の変更履歴によると、2021 年 3 月にこの API が追加されたとき、AWS は 100 を超えるチェックを備えると説明していました。
 
-<!-- 要確認: IAM のポリシーエディターに、ポリシーの検証の結果が表示されることと、表示の名前を実機で確かめる。表示されない場合は、コンソールの確認を削る -->
 <!-- 画面写真: IAM のポリシーエディター（JSON）の下の検証の表示。セキュリティの警告と提案の件数を枠で囲む -->
 
 > **この手順で確かめること**
-> - **やること**: 出力の `type`・`code`・`line`・`details` を確認します。次に、マネジメントコンソールで IAM を開き、左のメニューの「ポリシー」から「ポリシーの作成」を選び、JSON のエディターに `developer-draft.json` の中身を貼り付けて、エディターの下に表示される検証の結果を確認します。**ポリシーは作成せずに、画面を閉じてください。**
-> - **期待する結果**: 少なくとも次の 2 件の指摘があります。1 件目は、`type` が `SUGGESTION`、`code` が `EMPTY_SID_VALUE` の、空の Sid の指摘です。2 件目は、`code` が `PASS_ROLE_WITH_STAR_IN_RESOURCE` の、`iam:PassRole` をすべてのリソースに許可している指摘です。この指摘は、`type` が `SECURITY_WARNING` のセキュリティの警告として返る見込みです。`details` は日本語です。コンソールのエディターにも、同じ内容の指摘が表示されます。
+> - **やること**: 出力の `type`・`code`・`line`・`details` を確認します。次に、マネジメントコンソールで IAM を開き、左のメニューの「ポリシー」から「ポリシーの作成」を選び、「ポリシーエディタ」の「JSON」を選んで、エディターの中身を `developer-draft.json` の中身に置き換え、エディターの下に表示される検証の結果を確認します。**ポリシーは作成せずに、画面を閉じてください。**
+> - **期待する結果**: 指摘は次の 2 件です。1 件目は、`type` が `SUGGESTION`、`code` が `EMPTY_SID_VALUE`、`line` が `5` の、空の Sid の指摘です。2 件目は、`type` が `SECURITY_WARNING`、`code` が `PASS_ROLE_WITH_STAR_IN_RESOURCE`、`line` が `13` の、`iam:PassRole` をすべてのリソースに許可している指摘です。行番号は、`"Resource": "*"` の 14 行目ではなく、`"Action": "iam:PassRole"` の 13 行目です。`details` は日本語です。コンソールのエディターの下には「セキュリティ: 1」「エラー: 0」「警告: 0」「提案: 1」と表示され、行番号の横の印は、提案が 5 行目、セキュリティの警告が 13 行目と 14 行目に付きます。
 > - **ここから分かること**: ポリシーの検証は、書き方の誤りや危険な書き方を、位置を付けて指摘します。一方で、ポリシーの検証は、「このポリシーは、どの操作を許可するか」という問いには答えません。次の手順では、レポートのバケットのポリシーを使って、この種の問いを Access Analyzer に問い合わせます。
-
-<!-- 要確認: 著者が実行し、指摘の件数・コード・行番号・日本語の文面を、実際の出力に合わせる。PASS_ROLE_WITH_STAR_IN_RESOURCE の findingType が SECURITY_WARNING であることも確かめ、確かめられたら「返る見込みです」を言い切りに直す -->
 
 ## ３．指定したアクセスのチェックで許可していないことを確かめる
 
@@ -302,7 +298,7 @@ aws accessanalyzer check-access-not-granted \
 
 `--access` は、`actions=...` の短縮の書き方でも指定できます。このハンズオンでは、手順 3-3 でリソースの ARN を追加するときと形をそろえるため、JSON で書いています。
 
-出力の形の例は次のとおりです。`message` の文面は、実行した環境で表示されるものと異なることがあります。
+出力は次のとおりです。
 
 ```json
 {
@@ -310,8 +306,6 @@ aws accessanalyzer check-access-not-granted \
     "message": "The policy document does not grant access to perform one or more of the listed actions."
 }
 ```
-
-<!-- 要確認: message の実際の文面に置き換える。CLI の公式例の文面は "one or more" を含み、PASS の意味と食い違って読めるため、本文では結果の意味を result で説明する -->
 
 `message` の英文は、文字どおりに読むと「一部のアクションは許可していない」とも読めます。結果の意味は、`message` ではなく `result` で判断してください。
 
@@ -339,8 +333,6 @@ aws accessanalyzer check-access-not-granted \
 
 **処理の記録の全体には、ポリシーの本文と、署名や一時的な認証情報を含むリクエストのヘッダーが含まれます。記録の全体を画面に表示したり、画面写真に撮ったり、他の人に共有したりしないでください。**
 
-<!-- 要確認: 著者が CloudShell で実行し、表示される行を実際のものにする。再試行が起きると同じ行が 2 回以上表示されることがある -->
-
 > **この手順で確かめること**
 > - **やること**: 表示された行を確認します。
 > - **期待する結果**: `method=POST, url=https://access-analyzer.ap-northeast-1.amazonaws.com/policy/check-access-not-granted` の 1 行が表示されます。通信の再試行が起きた場合は、同じ行が 2 回以上表示されることがあります。
@@ -358,15 +350,15 @@ aws accessanalyzer check-access-not-granted \
   --region "${REGION}"
 ```
 
-出力の形の例は次のとおりです。`message` と `description` の文面は省略しています。`reasons` は、結果に関わったステートメントの番号 `statementIndex` と Sid `statementId` を示す理由です。`reasons` が返るかどうかと、その中身は、実行して確かめます。
+出力は次のとおりです。`reasons` は、結果に関わったステートメントの番号 `statementIndex` と Sid `statementId` を示す理由です。
 
 ```json
 {
     "result": "FAIL",
-    "message": "...",
+    "message": "The policy document grants access to perform one or more of the listed actions.",
     "reasons": [
         {
-            "description": "...",
+            "description": "One or more of the listed actions in the statement with sid: AllowReportBucket.",
             "statementIndex": 0,
             "statementId": "AllowReportBucket"
         }
@@ -374,11 +366,9 @@ aws accessanalyzer check-access-not-granted \
 }
 ```
 
-<!-- 要確認: FAIL のときの message と reasons の実際の中身 -->
-
 > **この手順で確かめること**
 > - **やること**: 出力の `result` と `reasons` を確認します。
-> - **期待する結果**: `result` は `FAIL` です。`reasons` が返る場合は、`statementIndex` が `0`、`statementId` が `AllowReportBucket` のように、Allow のステートメントを指しているかを観察します。
+> - **期待する結果**: `result` は `FAIL` です。`reasons` の `statementIndex` は `0`、`statementId` は `AllowReportBucket` で、Allow のステートメントを指しています。
 > - **ここから分かること**: Deny は `s3:Delete*` だけを拒否するため、`s3:PutBucketPolicy` は Allow の `s3:*` に当てはまります。削除は防げても、バケットポリシーを書き換えられると、誰がバケットにアクセスできるかを変えられてしまいます。また、`FAIL` は「許可しうる」という答えで、どのようなリクエストなら許可されるかの具体例は返りません。
 
 ### 3-3. ワイルドカードが本番のバケットにも当てはまらないかを確かめる
@@ -412,8 +402,6 @@ aws accessanalyzer check-access-not-granted \
   --policy-type IDENTITY_POLICY \
   --region "${REGION}"
 ```
-
-<!-- 要確認: 2 つの result を実行して確かめる。論理から予想した結果と違う場合は、結果を観察の項目に変え、理由を偽陽性の可能性として書く -->
 
 > **この手順で確かめること**
 > - **やること**: 2 つの `result` を比べます。
@@ -462,14 +450,13 @@ aws accessanalyzer check-no-new-access \
 
 AWS の中では、Access Analyzer が、2 つのポリシーが許可するリクエストの範囲を比べ、確かめるポリシーにだけ許可されるリクエストがあるかを調べました。
 
-<!-- 要確認: IAM コンソールのポリシーエディターに、新しいアクセスのチェックを実行するボタン（「新しいアクセスを確認」の類）があるかを実機で確かめる。あれば画面写真を撮り、この手順の後に「コンソールで同じチェックを実行する方法」として 1 段落を足す。コンソールから実行したチェックが課金されるかも確かめる -->
-<!-- 画面写真: 任意。IAM のポリシーエディターの「新しいアクセスを確認」の類のボタン。ボタンを枠で囲む。存在しなければ撮らない -->
+同じチェックは、IAM コンソールからも実行できます。既存のカスタマー管理ポリシーを編集する「ポリシーの編集」の画面で、エディターの下の「新しいアクセスを確認」を選び、「ポリシーをチェック」を選びます。比べる相手は、保存されている今のポリシーです。新しいポリシーを作る「ポリシーの作成」の画面には、この項目はありません。このハンズオンはポリシーを作成しないため、コンソールでは試しません。画面に表示されるとおり、コンソールから実行したチェックも、1 回ごとに課金されます。
 
-<!-- 要確認: 実際の出力に合わせる。v2 の reasons の description の文面と、v3 が PASS になること -->
+<!-- 画面写真: 任意。IAM の「ポリシーの編集」の画面の「新しいアクセスを確認」の項目。項目を枠で囲む -->
 
 > **この手順で確かめること**
 > - **やること**: 2 つの `result` と、2 つの `diff` の行数を比べます。
-> - **期待する結果**: v2 は `FAIL` です。v3 は、`diff` では大きく書き換わっているのに `PASS` です。v2 の `reasons` の `description` の文面は、実行して観察します。参考として、AWS CLI の公式のコマンド例では、同じ形の変更前のポリシーに `s3:GetObjectAcl` を追加した変更で、`description` が `New access in the statement with index: 0.` になっています。
+> - **期待する結果**: v2 は `FAIL` で、`reasons` の `description` は `New access in the statement with sid: ReadReports.` です。AWS CLI の公式のコマンド例では、同じ形の変更で `New access in the statement with index: 0.` になっていますが、Sid のあるステートメントでは Sid で示されます。v3 は、`diff` では大きく書き換わっているのに `PASS` です。
 > - **ここから分かること**: 新しいアクセスのチェックは、文字の差分ではなく、2 つのポリシーが許可するリクエストの範囲を比べます。v3 は、v1 が許可していた範囲の一部だけを許可するため、新しいアクセスはありません。
 
 ### 4-2. 社内の規則を参照ポリシーにする
@@ -515,8 +502,6 @@ for i in 1 2 3 4 5 6; do
     --region "${REGION}" --query result --output text
 done
 ```
-
-<!-- 要確認: 著者が実行して、公式サンプルの期待値との一致を確かめる。タグのキーを project に替えても結果が変わらないこと。一致しなければ、サンプルの元のキー use-your-own-tag-key-here に戻す -->
 
 > **この手順で確かめること**
 > - **やること**: 予想と結果を比べます。
@@ -579,12 +564,9 @@ aws accessanalyzer check-no-public-access \
 
 AWS の中では、Access Analyzer が、渡したバケットポリシーの文字列だけを調べて、S3 バケットを公開しうるかを答えました。アカウントやバケットの実際の設定は使っていません。
 
-<!-- 要確認: 著者の実行で 5-3 の結果を確かめる。PASS なら「条件まで読んで判断する」例として残す。FAIL なら、この任意の手順を削る -->
-<!-- 要確認: 5-1 と 5-2 の result を実行して確かめる -->
-
 > **この手順で確かめること**
 > - **やること**: 2 つの `result` を比べます。任意の 5-3 を実行した場合は、3 つを比べます。
-> - **期待する結果**: `bucket-public.json` は `FAIL`、`bucket-account.json` は `PASS` です。5-3 の結果は、観察の項目です。
+> - **期待する結果**: `bucket-public.json` は `FAIL`、`bucket-account.json` は `PASS` です。任意の 5-3 の `bucket-condition.json` も `PASS` です。Access Analyzer は、Principal だけでなく条件まで読んで、公開かどうかを判断しています。
 > - **ここから分かること**: 特定のアカウントへの共有は、公開ではありません。AWS の公式サンプルによると、カスタムポリシーチェックは、アカウントが自分の組織に属するかを知りません。組織の外からのアクセスを調べたいときは、同じ公式サンプルが勧めるとおり、外部アクセスのアナライザーを使うアクセスプレビューを使います。アクセスプレビューは、権限を変える前に、外部アクセスの検出結果を予告する機能です。
 
 ## ６．CI と同じ形でテンプレートのポリシーをまとめて確かめる
@@ -643,7 +625,7 @@ echo "終了コード: $?"
 | `--region` | `ap-northeast-1` | Access Analyzer を呼び出すリージョン。テンプレートの中のリージョンの値の解決にも使う |
 | `--actions` | 2 つのアクション | 許可してはいけないアクション。カンマで区切る |
 
-出力の形の例は次のとおりです。パブリックアクセスのチェックの出力を示しています。`message` と `details` の中身は省略しています。
+出力は次のとおりです。パブリックアクセスのチェックの出力を示しています。`details` の中身の一部は省略しています。
 
 ```json
 {
@@ -651,19 +633,21 @@ echo "終了コード: $?"
         {
             "findingType": "SECURITY_WARNING",
             "code": "policy-analysis-CheckNoPublicAccess",
-            "message": "...",
+            "message": "The resource policy grants public access for the given resource type.",
             "resourceName": "amzn-s3-demo-bucket-reports",
             "policyName": "BucketPolicy",
-            "details": {}
+            "details": {
+                "result": "FAIL",
+                "message": "...",
+                "reasons": [ ... ]
+            }
         }
     ],
     "NonBlockingFindings": []
 }
 ```
 
-<!-- 要確認: 実際の出力に合わせる -->
-
-`BlockingFindings` は CI を止める指摘、`NonBlockingFindings` は CI を止めない指摘の配列です。`code` は、`policy-analysis-` にチェックの名前をつなげたものです。
+`BlockingFindings` は CI を止める指摘、`NonBlockingFindings` は CI を止めない指摘の配列です。`code` は、`policy-analysis-` にチェックの名前をつなげたものです。`details` には、手順 5-1 と同じ形の、`CheckNoPublicAccess` の応答がそのまま入っています。
 
 AWS の中で起きたことを、順に説明します。まず、公式の検証ツールが、CloudShell の中でテンプレートを読みます。次に、`!GetAtt` や `!Sub` を、AWS STS で取得したアカウント ID などで解決して、ポリシーを組み立てます。そのうえで、ロールのインラインポリシー・バケットポリシー・ロールの信頼ポリシーを 1 つずつ Access Analyzer に渡します。パブリックアクセスのチェックでは、ID ベースポリシーであるロールのインラインポリシーは渡しません。`check-` で始まる 3 つのサブコマンドは、アナライザーを作成しません。
 
@@ -693,8 +677,6 @@ echo "終了コード: $?"
 ```bash
 deactivate
 ```
-
-<!-- 要確認: 4 回の終了コードと、BlockingFindings の resourceName・policyName を、実際の出力に合わせる -->
 
 > **この手順で確かめること**
 > - **やること**: 4 回の実行の終了コードと、`BlockingFindings` の `resourceName` と `policyName` を確認します。
@@ -922,15 +904,14 @@ aws cloudtrail lookup-events \
 
 API の説明文によると、イベント履歴で照会できるのは、CloudTrail が記録した管理イベントです。このハンズオンでは、CloudTrail の証跡を作成せずに、イベント履歴を照会します。
 
-続けて、マネジメントコンソールの右上のリージョンの表示が「アジアパシフィック (東京)」であることを確かめてから、CloudTrail を開き、左のメニューの「イベント履歴」を選びます。検索の条件で「イベントソース」を選び、`access-analyzer.amazonaws.com` を入力して絞り込みます。`CheckNoNewAccess` のイベントを 1 つ開いて、イベントの JSON の `requestParameters` を確認します。
+続けて、マネジメントコンソールの右上のリージョンの表示が「アジアパシフィック (東京)」であることを確かめてから、CloudTrail を開き、左のメニューの「イベント履歴」を選びます。「ルックアップ属性」で「イベントソース」を選び、`access-analyzer.amazonaws.com` を入力して絞り込みます。`CheckNoNewAccess` のイベントを 1 つ開いて、イベントの JSON の `requestParameters` を確認します。
 
 <!-- 画面写真: CloudTrail のイベント履歴。イベントソースの絞り込みと、CheckNoNewAccess の行を枠で囲む -->
 <!-- 画面写真: CheckNoNewAccess のイベントの JSON。requestParameters の部分を枠で囲む -->
-<!-- 要確認: Check* の呼び出しがイベント履歴に記録されること、イベントソースの名前、ポリシーの本文の表示。記録まで数分かかるため、表示されなければ 5〜10 分待って再実行する。記録されない場合は、この手順を「手元の回数を数える」に置き換え、Cost Explorer の確認だけを残す -->
 
 > **この手順で確かめること**
 > - **やること**: イベントの名前ごとの件数を確認し、`CheckAccessNotGranted`・`CheckNoNewAccess`・`CheckNoPublicAccess` の件数の合計に $0.002 を掛けます。イベントの JSON で、ポリシーの本文がどのように表示されるかを観察します。
-> - **期待する結果**: 3 つのチェックの件数の合計は、手順どおりに進めた場合は 29 前後です。任意の手順を含めると、最大 43 です。やり直した分と、公式の検証ツールの自動の再試行の分だけ、多くなることがあります。`ValidatePolicy` と `ListAnalyzers` も表示されます。イベントが表示されない場合は、記録まで時間がかかることがあるため、5〜10 分待ってから再実行します。API の仕様では、チェックに渡すポリシーは機密の値として扱われます。そのため、`requestParameters` にポリシーの本文がそのまま表示されるとは限りません。
+> - **期待する結果**: 3 つのチェックの件数の合計は、手順どおりに進めた場合は 29 前後です。任意の手順を含めると、最大 43 です。やり直した分と、公式の検証ツールの自動の再試行の分だけ、多くなることがあります。`ValidatePolicy` と `ListAnalyzers` も表示されます。イベントが表示されない場合は、記録まで時間がかかることがあるため、5〜10 分待ってから再実行します。API の仕様では、チェックに渡すポリシーは機密の値として扱われます。そのため、`requestParameters` の `existingPolicyDocument` や `newPolicyDocument` などのポリシーの本文は `***` に置き換えて記録され、`policyType` はそのまま記録されます。CloudTrail の記録から、どのポリシーを確かめたかは分かりません。
 > - **ここから分かること**: あなたは、イベント履歴に記録されたチェックの呼び出しの件数を数えました。この件数を、翌日以降の請求の数量と比べます。比べ方は、[費用の見積もり](#費用の見積もり)にあります。
 
 ## ９．後片付け
@@ -1023,9 +1004,9 @@ curl -s https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSIAMAccessAnal
 "usagetype" : "APN1-CustomCheck-API-Requests"
 ```
 
-**請求の数量を確かめる**: ハンズオンの翌日以降に、Cost Explorer で、使用タイプを `APN1-CustomCheck-API-Requests` に絞り込み、数量が手順 8 の件数と合うかを確かめます。初めて Cost Explorer を使う場合は、データが表示されるまで時間がかかることがあります。
+**請求の数量を確かめる**: ハンズオンの翌日以降に、マネジメントコンソールの「請求とコスト管理」で「Cost Explorer」を開きます。右の「レポートパラメータ」で、「日付範囲」をハンズオンを行った日を含む範囲にし、「フィルター」の「使用タイプ」で `APN1-CustomCheck-API-Requests` を選んで絞り込み、数量が手順 8 の件数と合うかを確かめます。初めて Cost Explorer を使う場合は、データが表示されるまで時間がかかることがあります。
 
-<!-- 要確認: Cost Explorer の画面の名前と絞り込みの手順。エラーで終わった呼び出しが数量に入るか -->
+<!-- 要確認: 使用タイプの一覧に APN1-CustomCheck-API-Requests が現れ、絞り込んだ数量が手順 8 の件数と合うか。エラーで終わった呼び出しが数量に入るか。画面の項目の名前は 2026-11 の検証で確かめた。日付範囲が既定の過去 6 か月のままでは、ハンズオンの月の項目は現れない -->
 <!-- 画面写真: Cost Explorer で使用タイプ APN1-CustomCheck-API-Requests に絞り込んだ画面。使用量を枠で囲む -->
 
 ## トラブルシューティング

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- overview: IAM Access Analyzer の機能の全体像と、カスタムポリシーチェックの位置（記事「IAM Access Analyzerとは？」）。
+     本文との対応（article/aws-iam-access-analyzer.md「IAM Access Analyzerとは？」の機能の表）:
+       - 左: アナライザーを作成して使う機能。外部・内部・未使用アクセスの分析（iaa-002〜iaa-004）。継続して分析し、結果を検出結果と呼ぶ。
+       - 右: アナライザー無しで呼び出す機能。ポリシーの検証 ValidatePolicy、カスタムポリシーチェック（CheckAccessNotGranted・CheckNoNewAccess・
+         CheckNoPublicAccess）、ポリシー生成 StartPolicyGeneration（analyzerArn を取らない。D-5。CloudTrail の記録から作成する。iaa-077）。
+       - 単価は東京リージョン。AWS Price List（AWSIAMAccessAnalyzer 版 20260911124556）を 2026-11-01 に取得（iaa-081）。
+         カスタムポリシーチェック $0.002 / 回、未使用アクセス $0.20 / 監視するリソース、内部アクセス $9.00 / 監視するリソース。
+         外部アクセスの分析・ポリシーの検証・ポリシー生成は Price List に項目が無い（iaa-084）。「無料」とは書かない。
+       - カスタムポリシーチェックの checkType は "Automated Reasoning Checks"（iaa-006、D-11）。
+       - 枠の見出しの IAM Access Analyzer のアイコンは、塗った正方形 .tile に白で置き、枠の左上の角に貼り付ける（線が枠の線と重ならない。2026-11-04 の指摘）。
+     幅の内訳: 外の枠 800。中身 752 = 左の枠 364 ＋ 間 24 ＋ 右の枠 364。各枠の中身の幅 316。
+     高さの内訳: 外の枠 = 見出し 40 ＋ 24 ＋ 中の枠 530 ＋ 24 = 618。その下に 17 ＋ 注記 22 ＋ 1。合計 658。
+       右の枠 530 = 見出し 40 ＋ 副題 22 ＋ 24 ＋ 箱 1 の 88 ＋ 16 ＋ 札 32 ＋ 8 ＋ 箱 2 の 172 ＋ 16 ＋ 箱 3 の 88 ＋ 24。
+       DESIGN の 630 から、箱 2 の 5 行と札の高さ 32 が収まるように 26 増やした。札は箱 2 の外、右上の上に置く（箱との間 8px）。 -->
+<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="deepcuts.css">
+<link rel="stylesheet" href="iaa.css">
+<script src="wires.js"></script>
+<script src="iaa.js"></script>
+<style>
+  #fig { width: 800px; height: 658px; }
+  .fn { position: absolute; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; border: 2px solid var(--ink); background: #fff; padding: 6px 12px; line-height: 1.4; white-space: nowrap; }
+  .fn b { font-size: 18px; font-weight: 900; }
+  .fn span { font-size: 16px; font-weight: 500; color: #4a4843; }
+  .fn code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; color: var(--ink); }
+  .fn.hot { border: 4px solid var(--hot); background: #ffe9df; padding: 8px 14px; }
+  .fn.hot .ck { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.5; }
+  .fn.hot .ck::before { content: "・"; }
+  .fn.hot span { margin-top: 4px; }
+</style>
+</head><body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- 外の枠: IAM Access Analyzer -->
+  <div class="fr" style="left:0;top:0;width:800px;height:618px">
+    <div class="gl"><span class="tile"><img src="../icons/AWSIdentityAccessManagementIAMAccessAnalyzer.svg"></span><span class="en">IAM Access Analyzer</span></div>
+  </div>
+
+  <!-- 左の枠: アナライザーを作成して使う機能（x 24〜388、y 64〜594） -->
+  <div class="fr" style="left:24px;top:64px;width:364px;height:530px"><span class="lt">アナライザーを作成して使う機能</span><span class="sub">リソースとロールを継続して分析する</span></div>
+  <div class="fn box" style="left:48px;top:150px;width:316px;height:64px"><b>外部アクセスの分析</b><span>Price List に項目なし</span></div>
+  <div class="fn box" style="left:48px;top:230px;width:316px;height:64px"><b>内部アクセスの分析</b><span>監視するリソース 1 つあたり $9.00</span></div>
+  <div class="fn box" style="left:48px;top:310px;width:316px;height:64px"><b>未使用アクセスの分析</b><span>監視するリソース 1 つあたり $0.20</span></div>
+  <div class="tx" style="left:48px;top:398px;line-height:22px">分析の結果を<b>検出結果</b>と呼ぶ</div>
+
+  <!-- 右の枠: アナライザー無しで呼び出す機能（x 412〜776、y 64〜594） -->
+  <div class="fr" style="left:412px;top:64px;width:364px;height:530px"><span class="lt">アナライザー無しで呼び出す機能</span><span class="sub">ポリシーを渡して答えを受け取る</span></div>
+  <div class="fn box" style="left:436px;top:150px;width:316px;height:88px"><b>ポリシーの検証</b><code>ValidatePolicy</code><span>Price List に項目なし</span></div>
+  <!-- 札は箱 2 の外、右上の上（箱との間 8px） -->
+  <div class="chip hotline" data-ok="1" style="right:48px;top:254px">この記事で扱う機能</div>
+  <div class="fn box hot" data-ok="1" style="left:436px;top:294px;width:316px;height:172px">
+    <b>カスタムポリシーチェック</b>
+    <div class="ck">指定したアクセスのチェック</div>
+    <div class="ck">新しいアクセスのチェック</div>
+    <div class="ck">パブリックアクセスのチェック</div>
+    <span>1 回 $0.002。Price List の名前は<br><b style="font-size:16px;color:var(--ink)">Automated Reasoning Checks</b></span>
+  </div>
+  <div class="fn box" style="left:436px;top:482px;width:316px;height:88px"><b>ポリシー生成</b><span>CloudTrail の記録から作成する<br>Price List に項目なし</span></div>
+
+  <div class="tx grey" style="left:8px;top:635px;line-height:22px">単価は東京リージョン。AWS Price List、2026 年 11 月 1 日に取得</div>
+</div>
+<script>
+window.addEventListener('load', async () => { await document.fonts.ready;
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

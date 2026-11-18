@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RunInstancesOnlyForDeepcuts",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/project": "deepcuts"
+        }
+      }
+    }
+  ]
+}

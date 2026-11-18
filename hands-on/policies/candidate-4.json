@@ -1,0 +1,16 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RunInstancesWithAnyProjectTag",
+      "Effect": "Allow",
+      "Action": "ec2:RunInstances",
+      "Resource": "*",
+      "Condition": {
+        "Null": {
+          "aws:RequestTag/project": "false"
+        }
+      }
+    }
+  ]
+}

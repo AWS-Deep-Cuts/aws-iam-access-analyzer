@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<!-- ci-flow: CI でデプロイの前に止める流れ（記事「IAM Access Analyzerの主な活用事例」、README の手順 6）。
+     本文との対応（記事の図の説明の文）: 開発者がテンプレートの変更を Git のリポジトリに送ると、CI が公式の検証ツールを実行する。
+     検証ツールは、テンプレートのポリシーを 1 つずつ Access Analyzer に送り、PASS か FAIL を受け取る。止めるべき指摘があれば、
+     検証ツールは終了コード 2 で終わり、CI はデプロイを止める。図の「ハンズオンの手順 6」の札を付けた部分を、ハンズオンで CloudShell から実行する。
+     根拠:
+       - 公式の検証ツール cfn-policy-validator（IAM Policy Validator for AWS CloudFormation）は、CloudFormation のテンプレートからポリシーを取り出し、
+         ポリシーの検証とカスタムポリシーチェックを実行する（iaa-100、iaa-101）。CI を止める指摘があると終了コード 2（iaa-102）。
+       - テンプレートのポリシー 1 つごとに API を 1 回呼び出す。同じ本文のポリシーは 1 回だけ（D-3）。
+       - CI の例の GitHub Actions は、公式の GitHub Action があること（iaa-103）による例示。
+       - ハンズオンで実行する範囲は札だけで示す。灰色の点線の枠（あなたが行う操作の意味）で囲まない（DESIGN §6.1）。
+     幅の内訳: 左の枠「開発者」168 ＋ 間 32 ＋ 中の枠「CI」328 ＋ 間 112 ＋ 右の枠「AWS Cloud」160 = 800。中身の幅は左 120、中 280、右 112。
+     高さの内訳（中の枠）: 見出し 40 ＋ 副題 22 ＋ 24 ＋ テンプレートのノード 112 ＋ 矢印と札 70 ＋ 検証ツールの箱 64 ＋ 縦の線と分かれ道 48 ＋ 分かれ道の箱 80 ＋ 24 = 484。
+     中心の高さ: Git のノードとテンプレートのノードのアイコン y = 114。検証ツールの箱と Access Analyzer のアイコン y = 300（往復の線は 288 と 312）。
+     テンプレートのノードは中の枠の左に寄せ（中心 x = 304）、下向きの矢印と、右上の札（x 324〜504）が重ならないようにする。 -->
+<link rel="stylesheet" href="diagram.css">
+<link rel="stylesheet" href="deepcuts.css">
+<link rel="stylesheet" href="iaa.css">
+<script src="wires.js"></script>
+<script src="iaa.js"></script>
+<style>
+  #fig { width: 800px; height: 484px; }
+  .node .t { line-height: 1.25; }
+  .vbox { position: absolute; border: 3px solid var(--ink); background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.35; }
+  .vbox b { font-size: 17px; font-weight: 900; }
+  .vbox code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; }
+  .vbox.hot { border: 4px solid var(--hot); }
+  .vbox.hot .ec { color: var(--hot); }
+  .vbox .ec { font-family: var(--font-mono); font-weight: 800; font-size: 16px; }
+  .vbox span { font-size: 17px; font-weight: 700; }
+</style>
+</head><body>
+<div id="fig">
+  <svg id="wires"></svg>
+
+  <!-- ===== 左: 開発者 ===== -->
+  <div class="fr lane" style="left:0;top:0;width:168px;height:484px">
+    <div class="gl"><img src="../icons/User.svg"><span class="ja">開発者</span></div>
+  </div>
+  <div class="node" id="git" style="left:24px;top:86px;width:120px"><img src="../icons/GitRepository.svg"><div class="t">Git<br>リポジトリ</div><div class="s">テンプレートの<br>変更を送る</div></div>
+
+  <!-- ===== 中: CI ===== -->
+  <div class="fr" style="left:200px;top:0;width:328px;height:484px"><span class="lt">CI</span><span class="sub">例: GitHub Actions</span></div>
+  <div class="node" id="tpl" style="left:224px;top:86px;width:160px"><img src="../icons/AWSCloudFormationTemplate.svg"><div class="t">CloudFormation の<br>テンプレート</div></div>
+  <div class="chip line" data-ok="1" style="right:296px;top:228px">ハンズオンの手順 6</div>
+  <div class="vbox" id="val" data-ok="1" style="left:224px;top:268px;width:280px;height:64px"><b>公式の検証ツール</b><code>cfn-policy-validator</code></div>
+  <div class="vbox hot" id="stop" style="left:224px;top:380px;width:132px;height:80px"><span class="ec">終了コード 2</span><span>デプロイを<br>止める</span></div>
+  <div class="vbox" id="go" style="left:372px;top:380px;width:132px;height:80px"><span class="ec">終了コード 0</span><span>デプロイする</span></div>
+
+  <!-- ===== 右: AWS Cloud ===== -->
+  <div class="fr cloud" style="left:640px;top:0;width:160px;height:484px">
+    <div class="gl"><img src="../icons/AWSCloudlogo.svg"><span class="en">AWS Cloud</span></div>
+  </div>
+  <div class="node" id="aa" style="left:664px;top:272px;width:112px"><img src="../icons/AWSIdentityAccessManagementIAMAccessAnalyzer.svg"><div class="t">IAM Access<br>Analyzer</div></div>
+
+  <!-- 往復の線のラベル（枠の間 x 528〜640） -->
+  <div class="lbl ink" data-nf="1" style="left:540px;top:236px;line-height:22px">ポリシーを<br>1 つずつ送る</div>
+  <div class="lbl ink" data-nf="1" style="left:540px;top:320px;line-height:22px">PASS か<br>FAIL</div>
+</div>
+<script>
+window.addEventListener('load', async () => { await document.fonts.ready;
+  wire('#git', '#tpl', {});                                   // Git → テンプレート（y = 114）
+  path([[304, 198], [304, 264]]);                             // テンプレート → 検証ツール
+  path([[364, 332], [364, 356], [290, 356], [290, 376]]);     // 検証ツール → 終了コード 2
+  path([[364, 356], [438, 356], [438, 376]]);                 // 検証ツール → 終了コード 0
+  path([[504, 288], [688, 288]]);                             // ポリシーを送る
+  path([[688, 312], [504, 312]]);                             // PASS か FAIL を受け取る
+  document.body.dataset.ready = '1';
+});
+</script>
+</body></html>

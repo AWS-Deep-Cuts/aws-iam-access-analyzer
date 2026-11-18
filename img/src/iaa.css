@@ -1,0 +1,62 @@
+/* IAM Access Analyzer の回の図の部品。diagram.css と deepcuts.css の後に読み込む。
+   中身はすべて #fig の直下に絶対位置で置き、枠の線と見出しの下端から 24px 以上、箱どうしは 16px 以上空ける（2026-11-01 の著者の指摘）。
+   枠の見出しは、枠の上端から 40px の高さに収める。中身は枠の上端から 64px 以降に置く。 */
+
+/* 中心の x を left に書くための補助 */
+.cx { transform: translateX(-50%); }
+
+/* グループの枠 */
+.fr { position: absolute; border: 2px solid var(--ink); }
+.fr.thin { border-width: 2px; }
+.fr.cloud { border-color: #242f3e; }
+.fr.region { border: 2px dashed #00a4a6; }
+.fr.lane { border: 2px dashed var(--grey); }
+.fr.lane.aws { border-color: var(--hot); }
+/* 見出し: 左上の角にアイコン 32px と名前（AWS の構成図の慣例） */
+.fr > .gl { position: absolute; left: -2px; top: -2px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.fr > .gl img { width: 32px; height: 32px; display: block; }
+.fr > .gl .en { font-family: var(--font-mono); font-weight: 800; font-size: 16px; letter-spacing: .04em; }
+.fr > .gl .ja { font-size: 17px; font-weight: 900; }
+.fr > .gl .code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; color: var(--grey); }
+/* 見出し: アイコンの無い名前（左上の内側） */
+.fr > .lt { position: absolute; left: 14px; top: 7px; font-size: 17px; font-weight: 900; white-space: nowrap; line-height: 1.5; }
+.fr.lane.aws > .lt, .fr.lane.aws > .gl .ja { color: var(--hot); }
+/* 枠の副題（見出しの下の 1 行）。枠の上端から 40px の位置 */
+.fr > .sub { position: absolute; left: 14px; top: 36px; font-size: 16px; font-weight: 500; white-space: nowrap; line-height: 1.4; color: #4a4843; }
+
+/* 箱 */
+.box { border: 2px solid var(--ink); background: #fff; padding: 4px 12px; }
+.box.hot { background: #fff; border: 4px solid var(--hot); color: var(--ink); }
+.box.tint { background: #ffe9df; border: 4px solid var(--hot); color: var(--ink); }
+.box.left { justify-content: flex-start; text-align: left; }
+.box small { font-size: 16px; font-weight: 500; color: #4a4843; line-height: 1.4; }
+.box b { font-weight: 900; }
+.box code, .tx code, .lbl code, .node .s code, .fbox code { font-family: var(--font-mono); font-weight: 800; font-size: 15px; }
+.st > b { font-size: 17px; }
+.st > span code { font-size: 15px; }
+
+/* 文字 */
+.tx { position: absolute; font-size: 16px; font-weight: 500; line-height: 1.4; white-space: nowrap; }
+.tx b { font-weight: 900; }
+.tx.big { font-size: 19px; font-weight: 900; }
+.tx.hot { color: var(--hot); font-weight: 900; }
+.tx.grey { color: var(--grey); }
+.tx.dark { color: #4a4843; }
+.lbl { font-size: 16px; line-height: 1.4; }
+.lbl.ink { color: var(--ink); background: transparent; padding: 0; }
+
+/* 札（白地の小さな札） */
+.chip { font-size: 16px; font-family: var(--font-body); font-weight: 900; letter-spacing: 0; padding: 3px 10px; line-height: 22px; white-space: nowrap; }
+.chip.line { background: #fff; color: var(--ink); border: 2px solid var(--ink); }
+.chip.hotline { background: #fff; color: var(--hot); border: 2px solid var(--hot); }
+
+/* ノード */
+.node .s { font-size: 16px; color: #4a4843; }
+
+/* 線を引くための点（大きさの無い要素） */
+.pt { position: absolute; width: 0; height: 0; }
+
+/* 見出しのアイコンが背景の無いリソースのアイコンのときは、塗った正方形の上に白で置き、枠の左上の角に貼り付ける
+   （AWS Cloud・AWS アカウントの群のアイコンと同じ形。アイコンの線が枠の線と重ならない）。色は Security, Identity & Compliance の色 */
+.fr > .gl .tile { width: 32px; height: 32px; background: #dd344c; display: flex; align-items: center; justify-content: center; flex: none; }
+.fr > .gl .tile img { width: 26px; height: 26px; filter: brightness(0) invert(1); }

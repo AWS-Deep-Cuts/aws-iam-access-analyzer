@@ -130,6 +130,6 @@ echo ""
 if [[ "${DECISION}" == "allowed" ]]; then
   echo "✅ 置き方 ${PLACEMENT_TEXT} は、Allow のステートメント Board に一致し、どの Deny のステートメントにも一致しませんでした。"
 else
-  echo "⚠️  置き方 ${PLACEMENT_TEXT} の判定が allowed ではありません。README のトラブルシューティングを確認してください。" >&2
+  echo "⚠️  置き方 ${PLACEMENT_TEXT} の判定が allowed ではありません。README のトラブルシューティング（書籍では 3.3 節の「うまくいかないとき」）を確認してください。" >&2
   exit 1
 fi

@@ -69,7 +69,7 @@ if NAMES=$(aws accessanalyzer list-analyzers --region "${REGION}" \
   fi
 else
   echo "  ⚠️  アナライザーの一覧を取得できませんでした。"
-  echo "     access-analyzer:ListAnalyzers の権限を確認してから、README の手順 9 の「この手順で確かめること」のコマンドを実行してください。"
+  echo "     access-analyzer:ListAnalyzers の権限を確認してから、README の手順 9 の「この手順で確かめること」（書籍では手順 9-3）のコマンドを実行してください。"
   WARN=1
 fi
 echo ""
@@ -102,7 +102,7 @@ echo "  カスタムポリシーチェックの料金は呼び出しごとにか
 echo ""
 if [[ "${WARN}" -ne 0 ]]; then
   echo "⚠️  確認が必要な項目があります。上の ⚠️ の行を読んでください。"
-  echo "   README の手順 9 の「この手順で確かめること」で、アナライザーの一覧を手順 1 と比べてください。"
+  echo "   README の手順 9 の「この手順で確かめること」（書籍では手順 9-3）で、アナライザーの一覧を手順 1 と比べてください。"
   exit 1
 fi
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

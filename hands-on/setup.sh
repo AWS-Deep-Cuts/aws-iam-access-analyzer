@@ -46,7 +46,7 @@ if [[ "${CURRENT_REGION}" != "${REGION}" ]]; then
 fi
 if ! aws accessanalyzer check-no-public-access --generate-cli-skeleton input >/dev/null 2>&1; then
   echo "❌ Error: この AWS CLI は check-no-public-access コマンドに対応していません。現在の版: $(aws --version 2>&1 | cut -d' ' -f1)" >&2
-  echo "   AWS CLI 2.16.6 以降が必要です。README の「前提条件」の手順で更新してから、もう一度実行してください。" >&2
+  echo "   AWS CLI 2.16.6 以降が必要です。README の「前提条件」の手順（書籍では 3.4 節の「AWS CLI の最新版をホームディレクトリにインストールする」）で更新してから、もう一度実行してください。" >&2
   exit 1
 fi
 if ! python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)' 2>/dev/null; then
